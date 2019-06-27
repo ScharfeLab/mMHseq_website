@@ -16,7 +16,12 @@ fluidPage(
                                         choices = as.character(all_amp_name$V1))),
                             fluidRow(selectInput(inputId="population",
                                         label="Population",
-                                        choices=c("Sandawe","Chagga","EuroAmer","Biaka","TWChinese"))),#select population
+                                        choices=c("Sandawe",
+                                                  "Chagga",
+                                                  "EuroAmer",
+                                                  "Biaka",
+                                                  "TWChinese",
+                                                  "Zaramo"))),#select population
                             fluidRow(htmlOutput("selectSample")),#select sample ID
                             fluidRow(tags$img(src='variantcategory.png',align="right"))
                ),
@@ -35,7 +40,12 @@ fluidPage(
                                         choices = as.character(all_amp_name$V1))),
                             fluidRow(selectInput(inputId="population2",
                                         label="Population",
-                                        choices=c("Sandawe","Chagga","EuroAmer","Biaka","TWChinese"))),#select population
+                                        choices=c("Sandawe",
+                                                  "Chagga",
+                                                  "EuroAmer",
+                                                  "Biaka",
+                                                  "TWChinese",
+                                                  "Zaramo"))),#select population
                             fluidRow(tags$img(src="variantcategory.png",align="right"))
                ),
                mainPanel(
@@ -58,7 +68,12 @@ fluidPage(
                                         choices=as.character(all_amp_name$V1)),
                             selectInput(inputId="population3",
                                         label="Population",
-                                        choices=c("Sandawe","Chagga","EuroAmer","Biaka","TWChinese"))
+                                        choices=c("Sandawe",
+                                                  "Chagga",
+                                                  "EuroAmer",
+                                                  "Biaka",
+                                                  "TWChinese",
+                                                  "Zaramo"))
                             ),
                mainPanel(DT::dataTableOutput("mh_frequency_table")))
                ),
