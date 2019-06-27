@@ -251,7 +251,7 @@ function(input,output){
     temp_table=haplotype_data()[which(haplotype_data()$population==input$population3),]
     temp_summary=summary(as.factor(c(as.character(temp_table$Hap1),as.character(temp_table$Hap2))))
     
-    out_table=data.frame("haplotype"=sapply(names(temp_summary),FUN = convert_to_haplotype),"count"=temp_summary,"frequency"=temp_summary/sum(temp_summary))
+    out_table=data.frame("haplotype"=sapply(names(temp_summary),FUN = convert_to_haplotype),"count"=temp_summary,"frequency"=round(temp_summary/sum(temp_summary), 3))
     # no_sample_vec=c()
     # for (i in 1:dim(out_table)[1]){
     #   temp_query=as.character(out_table$haplotype[i])
@@ -264,10 +264,10 @@ function(input,output){
     DT::datatable(out_table,rownames = FALSE,options=list(pageLength=20),width = 400)
   })
   #########QC figures for all three runs: use renderUI() to generate corresponding HTML tags or taglist  
-  output$qc_measure<-renderUI(
-    #generate the tag to load pdf file
-    tags$iframe(style="height:1000px; width:100%", 
-                src=paste0("data/",input$dataset,"/qc/",input$qc_pdf,".pdf")))
+  #output$qc_measure<-renderUI(
+  #  #generate the tag to load pdf file
+  #  tags$iframe(style="height:1000px; width:100%", 
+  #              src=paste0("data/",input$dataset,"/qc/",input$qc_pdf,".pdf")))
   
 }
 #Load data
