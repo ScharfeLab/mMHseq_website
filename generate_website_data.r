@@ -217,7 +217,7 @@ if (dir.exists(paste0(output_website_dir,"mh_figure_data/"))){
               row.names=FALSE,quote=FALSE)        
 }else{
   dir.create(paste0(output_website_dir,"mh_figure_data/"))
-  write.table(converted_snp_for_plot,
+  write.table(output_plot_data,
               paste0(output_website_dir,"mh_figure_data/website_plotdata.txt"),
               row.names=FALSE,quote=FALSE)           
 }
