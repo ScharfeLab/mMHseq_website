@@ -17,8 +17,7 @@ makePlotContainers <- function(pop_info,mh_info,all_sample_info, height=300, wid
   #lst <- lapply(split(lst, (seq.int(n)-1)%/%ncol), function(x) column(12/ncol, x))
   do.call(tagList, lst) #convert to tagList as html component for renderUI()
 }
-
-renderPlots <- function(pop_info, mh_info,read_info,amp_info,all_sample_info,all_mh_data,output) {
+renderPlots <- function(pop_info, mh_info,read_info,amp_info,all_sample_info,all_mh_data,all_figure_data,output) {
   #Render multiple plots given input$<id> and store them into different output$<id>
   sub_sample=all_sample_info$KenID[which(all_sample_info$population==pop_info)]
   mh_region=all_mh_data[which(all_mh_data$Amplicon==mh_info),]
@@ -28,9 +27,11 @@ renderPlots <- function(pop_info, mh_info,read_info,amp_info,all_sample_info,all
       each_sample_t <- each_sample  # need to be evaluated here
       temp_sn=paste0(mh_info,"_",each_sample_t)
       #print(temp_sn)
-      temp_mh_figure_data<-read.table(paste0("./www/data/pooled_vcf/mh_figure_data/",
-                                             mh_info,"_",each_sample_t,
-                                             "_plotdata.txt"),header=TRUE)
+      # temp_mh_figure_data<-read.table(paste0("./www/data/pooled_vcf/mh_figure_data/",
+      #                                        mh_info,"_",each_sample_t,
+      #                                        "_plotdata.txt"),header=TRUE)
+      temp_mh_figure_data<-all_figure_data[intersect(which(all_figure_data$MHapID==mh_info),
+                                                     which(all_figure_data$SampleID==each_sample_t)),]
       temp_sample_total_read=read_info$Total[which(as.character(read_info$SampleID)==each_sample_t)]
       #print(temp_sample_total_read)
       #get amplicon count data for this sample
@@ -58,6 +59,8 @@ convert_to_haplotype<-function(x){
 microhaplotype_data=read.table("Bed_mMH_Miseq_08092018_P_remove_six_bad_amp.bed",header=FALSE)
 colnames(microhaplotype_data)=c("CHROM","START","END","Amplicon","left_primer_start","left_primer_end","right_primer_start","right_primer_end")
 all_sample_name=read.table("all_sample_name.txt",header=TRUE) #all sample name and population information 
+#All data for plotting haplotype
+figure_plot_all_data<-read.table("./www/data/pooled_vcf/mh_figure_data/website_plotdata.txt",header=TRUE)
 #total_read=read.table(paste0("./www/data/pooled_vcf/qc/all_sample_total_read.txt"),header=TRUE)
 #############Server function used in UI defined below
 ##Notes:
@@ -69,10 +72,10 @@ all_sample_name=read.table("all_sample_name.txt",header=TRUE) #all sample name a
 function(input,output){
   #Get total read number for each sample
   total_read<-reactive({tr<-read.table(paste0("./www/data/pooled_vcf/qc/all_sample_total_read.txt"),header=TRUE)
-                       return(tr)})
+  return(tr)})
   #Get total amplicon count for each sample
   total_amplicon<-reactive({ta<-read.table(paste0("./www/data/pooled_vcf/qc/all_sample_uniformity_count.txt"),header=TRUE)
-                            return(ta)})
+  return(ta)})
   #########Draw mh plot of all samples with ggplot2 and save them into a list for further plotting
   
   #########Dynamic UI to show KenID belonging to all population
@@ -81,12 +84,15 @@ function(input,output){
                                              choices=all_sample_name$KenID[which(all_sample_name$population==input$population)],
                                              size=10,selectize = FALSE)})
   ##########Plot a single MH_sample vcf data and enable clicking to show variant public and QC information
-  #Read the corresponding plotting data, the plot will change depending on input value
-  figure_plot_data_single<-reactive({fd=read.table(paste0("./www/data/pooled_vcf/mh_figure_data/",
-                                                   input$mh_region,"_",input$sampleID,
-                                                   "_plotdata.txt"),header=TRUE)
-  return(fd)
-  })
+  #Read all website data into one variable
+  
+  #Read the corresponding plotting data, the plot will change depending on input value  
+  # figure_plot_data_single<-reactive({fd=read.table(paste0("./www/data/pooled_vcf/mh_figure_data/",
+  #                                                  input$mh_region,"_",input$sampleID,
+  #                                                  "_plotdata.txt"),header=TRUE)
+  # return(fd)
+  # })
+  
   #ggplot2 and renderPlot() for the figure plot data of the single sample
   output$mh_figure_single<-renderPlot({
     #access sample coverage data
@@ -99,8 +105,11 @@ function(input,output){
     pop_info=input$population
     #get mh_region data of this specific mh_region
     mh_region=microhaplotype_data[which(microhaplotype_data$Amplicon==input$mh_region),]
+    #extract single sample data from given MH and sample name
+    figure_plot_data_single<-figure_plot_all_data[intersect(which(figure_plot_all_data$MHapID==input$mh_region),
+                                                            which(figure_plot_all_data$SampleID==input$sampleID)),]
     #ggplot2 
-    plot_microhaplotype_figure(converted_snp_for_plot = figure_plot_data_single(),
+    plot_microhaplotype_figure(converted_snp_for_plot = figure_plot_data_single,
                                mh_region = mh_region,
                                pop_info = pop_info,
                                each_sample_total_read = each_sample_total_read,
@@ -109,6 +118,8 @@ function(input,output){
   })
   #Click information 1: public database annotation
   output$info <- renderText({
+    figure_plot_data_single<-figure_plot_all_data[intersect(which(figure_plot_all_data$MHapID==input$mh_region),
+                                                            which(figure_plot_all_data$SampleID==input$sampleID)),]
     #based on input$plot_click$x and input$plot_click$y value, search and return details of the variant
     mh_region=microhaplotype_data[which(microhaplotype_data$Amplicon==input$mh_region),]#get mh_region data
     if (is.null(input$plot_click)){
@@ -117,7 +128,7 @@ function(input,output){
     if (input$plot_click$y<=2.2 && input$plot_click$y>=1.8 && input$plot_click$x>=mh_region$START && input$plot_click$x<=mh_region$END){
       query_haplotype="hap2"
       query=ceiling(input$plot_click$x)#get the coordinate
-      temp_data=figure_plot_data_single()[figure_plot_data_single()$haplotype==query_haplotype,]#extract the data
+      temp_data=figure_plot_data_single[figure_plot_data_single$haplotype==query_haplotype,]#extract the data
       query_idx=which(temp_data$end==query)#get correct index
       if (length(query_idx)>0){
         query_result=temp_data[query_idx,]
@@ -146,7 +157,7 @@ function(input,output){
     }else if (input$plot_click$y<=1.2 && input$plot_click$y>=0.8 && input$plot_click$x>=mh_region$START && input$plot_click$x<=mh_region$END){
       query_haplotype="hap1"
       query=ceiling(input$plot_click$x)
-      temp_data=figure_plot_data_single()[figure_plot_data_single()$haplotype==query_haplotype,]
+      temp_data=figure_plot_data_single[figure_plot_data_single$haplotype==query_haplotype,]
       query_idx=which(temp_data$end==query)
       if (length(query_idx)>0){
         query_result=temp_data[query_idx,]
@@ -168,7 +179,7 @@ function(input,output){
                  "Haplotype 1:",query_result$BaseCall,"\n",
                  "Position:",query_result$end,"\n",
                  "Variant Category:",query_result$status,"\n"
-                 )
+          )
         }
       }else{
         paste0("Please Click on SNPs for details")
@@ -179,6 +190,8 @@ function(input,output){
   })
   #Click information 2: base calling quality control statistics
   output$info2<- renderText({
+    figure_plot_data_single<-figure_plot_all_data[intersect(which(figure_plot_all_data$MHapID==input$mh_region),
+                                                            which(figure_plot_all_data$SampleID==input$sampleID)),]
     #based on input$plot_click$x and input$plot_click$y value, search and return details of the variant
     mh_region=microhaplotype_data[which(microhaplotype_data$Amplicon==input$mh_region),]#get mh_region data
     if (is.null(input$plot_click)){
@@ -187,7 +200,7 @@ function(input,output){
     if (input$plot_click$y<=2.2 && input$plot_click$y>=1.8 && input$plot_click$x>=mh_region$START && input$plot_click$x<=mh_region$END){
       query_haplotype="hap2"
       query=ceiling(input$plot_click$x)#get the coordinate
-      temp_data=figure_plot_data_single()[figure_plot_data_single()$haplotype==query_haplotype,]#extract the data
+      temp_data=figure_plot_data_single[figure_plot_data_single$haplotype==query_haplotype,]#extract the data
       query_idx=which(temp_data$end==query)#get correct index
       if (length(query_idx)>0){
         query_result=temp_data[query_idx,]
@@ -204,7 +217,7 @@ function(input,output){
     }else if (input$plot_click$y<=1.2 && input$plot_click$y>=0.8 && input$plot_click$x>=mh_region$START && input$plot_click$x<=mh_region$END){
       query_haplotype="hap1"
       query=ceiling(input$plot_click$x)
-      temp_data=figure_plot_data_single()[figure_plot_data_single()$haplotype==query_haplotype,]
+      temp_data=figure_plot_data_single[figure_plot_data_single$haplotype==query_haplotype,]
       query_idx=which(temp_data$end==query)
       if (length(query_idx)>0){
         query_result=temp_data[query_idx,]
@@ -224,8 +237,9 @@ function(input,output){
   })
   ##########Plot multiple MH_sample data simultaneously
   #render multiple plots if we observe change of mh region and population widget
-  observeEvent(input$mh_region3,renderPlots(input$population2,input$mh_region3,total_read(),total_amplicon(),all_sample_name,microhaplotype_data,output))
-  observeEvent(input$population2,renderPlots(input$population2,input$mh_region3,total_read(),total_amplicon(),all_sample_name,microhaplotype_data,output))
+  #output is a global variable
+  observeEvent(input$mh_region3,renderPlots(input$population2,input$mh_region3,total_read(),total_amplicon(),all_sample_name,microhaplotype_data,figure_plot_all_data,output))
+  observeEvent(input$population2,renderPlots(input$population2,input$mh_region3,total_read(),total_amplicon(),all_sample_name,microhaplotype_data,figure_plot_all_data,output))
   #combine these plots together and display them on the webpage
   output$mh_figure_all <- renderUI({
     makePlotContainers(input$population2,input$mh_region3,all_sample_name)
@@ -246,12 +260,12 @@ function(input,output){
   haplotype_data=reactive({freq_tbl=read.table(paste0("./www/data/pooled_vcf/mh_frequency/",
                                                       input$mh_region4,
                                                       "_haplotype.txt"),header=TRUE)
-                          return(freq_tbl)})#read raw haplotype data
+  return(freq_tbl)})#read raw haplotype data
   output$mh_frequency_table<-DT::renderDataTable({
     temp_table=haplotype_data()[which(haplotype_data()$population==input$population3),]
     temp_summary=summary(as.factor(c(as.character(temp_table$Hap1),as.character(temp_table$Hap2))))
     
-    out_table=data.frame("haplotype"=sapply(names(temp_summary),FUN = convert_to_haplotype),"count"=temp_summary,"frequency"=round(temp_summary/sum(temp_summary), 3))
+    out_table=data.frame("haplotype"=sapply(names(temp_summary),FUN = convert_to_haplotype),"count"=temp_summary,"frequency"=temp_summary/sum(temp_summary))
     # no_sample_vec=c()
     # for (i in 1:dim(out_table)[1]){
     #   temp_query=as.character(out_table$haplotype[i])
@@ -264,10 +278,10 @@ function(input,output){
     DT::datatable(out_table,rownames = FALSE,options=list(pageLength=20),width = 400)
   })
   #########QC figures for all three runs: use renderUI() to generate corresponding HTML tags or taglist  
-  #output$qc_measure<-renderUI(
-  #  #generate the tag to load pdf file
-  #  tags$iframe(style="height:1000px; width:100%", 
-  #              src=paste0("data/",input$dataset,"/qc/",input$qc_pdf,".pdf")))
+  output$qc_measure<-renderUI(
+    #generate the tag to load pdf file
+    tags$iframe(style="height:1000px; width:100%", 
+                src=paste0("data/",input$dataset,"/qc/",input$qc_pdf,".pdf")))
   
 }
 #Load data

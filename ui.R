@@ -12,30 +12,40 @@ fluidPage(
     tabPanel("MH individual figure",
              sidebarLayout(
                sidebarPanel(fluidRow(selectInput(inputId = "mh_region",
-                                        label = "MH region",
-                                        choices = as.character(all_amp_name$V1))),
+                                                 label = "MH region",
+                                                 choices = as.character(all_amp_name$V1))),
                             fluidRow(selectInput(inputId="population",
-                                        label="Population",
-                                        choices=c("Biaka","Chagga","EuroAmer","Sandawe","TWChinese", "Zaramo"))),#select population
+                                                 label="Population",
+                                                 choices=c("Sandawe",
+                                                           "Chagga",
+                                                           "EuroAmer",
+                                                           "Biaka",
+                                                           "TWChinese",
+                                                           "Zaramo"))),#select population
                             fluidRow(htmlOutput("selectSample")),#select sample ID
                             fluidRow(tags$img(src='variantcategory.png',align="right"))
                ),
                mainPanel(#textOutput("txtOutput")
-                         fluidRow(plotOutput("mh_figure_single",click = "plot_click")),
-                         fluidRow(column(width=6,verbatimTextOutput("info")),
-                                  column(width=6,verbatimTextOutput("info2")))
-                         )
+                 fluidRow(plotOutput("mh_figure_single",click = "plot_click")),
+                 fluidRow(column(width=6,verbatimTextOutput("info")),
+                          column(width=6,verbatimTextOutput("info2")))
+               )
              )
     ),
     tabPanel("All MH figures by population",
              sidebarLayout(
                sidebarPanel(tags$style(".well {background-color:#FFF;}"),
                             fluidRow(selectInput(inputId = "mh_region3",
-                                        label = "MH region",
-                                        choices = as.character(all_amp_name$V1))),
+                                                 label = "MH region",
+                                                 choices = as.character(all_amp_name$V1))),
                             fluidRow(selectInput(inputId="population2",
-                                        label="Population",
-                                        choices=c("Biaka","Chagga","EuroAmer","Sandawe","TWChinese", "Zaramo"))),#select population
+                                                 label="Population",
+                                                 choices=c("Sandawe",
+                                                           "Chagga",
+                                                           "EuroAmer",
+                                                           "Biaka",
+                                                           "TWChinese",
+                                                           "Zaramo"))),#select population
                             fluidRow(tags$img(src="variantcategory.png",align="right"))
                ),
                mainPanel(
@@ -48,7 +58,7 @@ fluidPage(
                sidebarPanel(selectInput(inputId = "mh_region2",
                                         label = "MH region",
                                         choices = as.character(all_amp_name$V1))
-                            ),
+               ),
                mainPanel(DT::dataTableOutput("mh_table"))
              )),
     tabPanel("MH haplotype frequency summary table",
@@ -58,10 +68,15 @@ fluidPage(
                                         choices=as.character(all_amp_name$V1)),
                             selectInput(inputId="population3",
                                         label="Population",
-                                        choices=c("Biaka","Chagga","EuroAmer","Sandawe","TWChinese", "Zaramo"))
-                            ),
-               mainPanel(DT::dataTableOutput("mh_frequency_table")))
+                                        choices=c("Sandawe",
+                                                  "Chagga",
+                                                  "EuroAmer",
+                                                  "Biaka",
+                                                  "TWChinese",
+                                                  "Zaramo"))
                ),
+               mainPanel(DT::dataTableOutput("mh_frequency_table")))
+    ),
     tabPanel("QC figure",
              sidebarLayout(#How the plot should be organized based on data
                sidebarPanel(selectInput(inputId = "dataset",
