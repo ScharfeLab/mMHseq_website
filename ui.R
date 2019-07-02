@@ -23,7 +23,8 @@ fluidPage(
                                                            "TWChinese",
                                                            "Zaramo"))),#select population
                             fluidRow(htmlOutput("selectSample")),#select sample ID
-                            fluidRow(tags$img(src='variantcategory.png',align="right"))
+                            fluidRow(tags$img(src='image/color_legend.png')),
+                            width = 3
                ),
                mainPanel(#textOutput("txtOutput")
                  fluidRow(plotOutput("mh_figure_single",click = "plot_click")),
@@ -46,7 +47,8 @@ fluidPage(
                                                            "Biaka",
                                                            "TWChinese",
                                                            "Zaramo"))),#select population
-                            fluidRow(tags$img(src="variantcategory.png",align="right"))
+                            fluidRow(tags$img(src="image/color_legend.png")),
+                            width = 3
                ),
                mainPanel(
                  fluidRow(uiOutput("mh_figure_all"))#depend on mh_figure_all variable
@@ -57,7 +59,8 @@ fluidPage(
              sidebarLayout(
                sidebarPanel(selectInput(inputId = "mh_region2",
                                         label = "MH region",
-                                        choices = as.character(all_amp_name$V1))
+                                        choices = as.character(all_amp_name$V1)),
+                            width = 3
                ),
                mainPanel(DT::dataTableOutput("mh_table"))
              )),
@@ -73,7 +76,8 @@ fluidPage(
                                                   "EuroAmer",
                                                   "Biaka",
                                                   "TWChinese",
-                                                  "Zaramo"))
+                                                  "Zaramo")),
+                            width = 3
                ),
                mainPanel(DT::dataTableOutput("mh_frequency_table")))
     ),
@@ -87,7 +91,8 @@ fluidPage(
                                          choices = c("SampleCoverage",
                                                      "AmpliconCoverageBySample",
                                                      "AmpliconCoverageByAmplicon",
-                                                     "BasePairCoverage"))
+                                                     "BasePairCoverage")),
+                            width = 3
                ),
                mainPanel(uiOutput("qc_measure"))
              )
