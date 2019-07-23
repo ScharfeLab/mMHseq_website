@@ -16,7 +16,7 @@ microhaplotype_data=read.table(paste0(resource_dir,"mMHseq_90amp_no_primer.bed")
 colnames(microhaplotype_data)=c("CHROM","START","END","Amplicon")#,"left_primer_start","left_primer_end","right_primer_start","right_primer_end")
 #Load Ken's SNP information on each MH
 ken_dbsnp=read.xls(paste0(resource_dir,"Ken_90MH_dbSNP.xlsx"))#Ken's known snp ID on 96 MH region
-output_website_dir="/Users/iris/Documents/mMHseq_generated_data_2/"
+output_website_dir="/Users/iris/Documents/mMHseq_generated_data_3/"
 
 
 
@@ -56,7 +56,7 @@ snp_detail_table_1000genome=read.table(paste0(output_website_dir,"snp_detail_tab
 #read each filtered and phased vcf file of each sample into a list
 all_sample_genotype=list()
 for (each_sample in all_sample_info$KenID){
-  mh_data=fread(paste0(individual_vcf_dir,each_sample,"_phased.vcf"),skip="#CHROM")#replace this line with fread(file,skip="#CHROM") later
+  mh_data=fread(paste0(individual_vcf_dir,each_sample,"_filtered_phased.vcf"),skip="#CHROM")#replace this line with fread(file,skip="#CHROM") later
   colnames(mh_data)[1]="CHROM"#,"POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT",each_sample)
   all_sample_genotype[[each_sample]]=mh_data
 }
