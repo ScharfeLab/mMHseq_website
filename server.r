@@ -1,6 +1,13 @@
 library(shiny)
+library(shinyjs)
 library(DT)
 source("helpers.R")
+
+# relate to text download functionality
+clicked <- FALSE
+out1 <- NULL
+out2 <- NULL
+
 #############Functions defined here
 makePlotContainers <- function(pop_info,mh_info,all_sample_info, height=300, width="100%", ...) {
   ## Validate inputs
@@ -26,7 +33,7 @@ renderPlots <- function(pop_info, mh_info,read_info,amp_info,all_sample_info,all
     local({
       each_sample_t <- each_sample  # need to be evaluated here
       temp_sn=paste0(mh_info,"_",each_sample_t)
-      #print(temp_sn)
+      # print(temp_sn)
       # temp_mh_figure_data<-read.table(paste0("./www/data/pooled_vcf/mh_figure_data/",
       #                                        mh_info,"_",each_sample_t,
       #                                        "_plotdata.txt"),header=TRUE)
@@ -120,78 +127,207 @@ function(input,output){
   output$info <- renderText({
     figure_plot_data_single<-figure_plot_all_data[intersect(which(figure_plot_all_data$MHapID==input$mh_region),
                                                             which(figure_plot_all_data$SampleID==input$sampleID)),]
+    
+    out1 <<- NULL
     #based on input$plot_click$x and input$plot_click$y value, search and return details of the variant
     mh_region=microhaplotype_data[which(microhaplotype_data$Amplicon==input$mh_region),]#get mh_region data
     if (is.null(input$plot_click)){
+      output$ui.download.click.info <- renderUI({
+        NULL
+      })
       return()
     }
     if (input$plot_click$y<=2.2 && input$plot_click$y>=1.8 && input$plot_click$x>=mh_region$START && input$plot_click$x<=mh_region$END){
       query_haplotype="hap2"
       query=ceiling(input$plot_click$x)#get the coordinate
       temp_data=figure_plot_data_single[figure_plot_data_single$haplotype==query_haplotype,]#extract the data
-      query_idx=which(temp_data$end==query)#get correct index
-      if (length(query_idx)>0){
+      query_idx=which(abs(temp_data$end-query) < 2.5)#get correct index
+      if (length(query_idx)>0 & length(query_idx)<=1){
+        print(query_idx)
         query_result=temp_data[query_idx,]
         if (query_result$status!="Novel"){
-          paste0("SNP ID:",query_result$snpid,"\n",
+          out1 <<- paste0("SNP ID:",query_result$snpid,"\n",
                  "REF:",query_result$REF," ALT:",query_result$ALT,"\n",
                  "Haplotype 2:",query_result$BaseCall,"\n",
                  "Position:",query_result$end,"\n",
                  "Variant Category:",query_result$status,"\n",
-                 "Allele Frequency in 1000Genome\n",
+                 "Allele Frequency in 1000Genome:\n",
                  "Eastern Asian:",query_result$EAS,"\n",
                  "American:",query_result$AMR,"\n",
                  "African:",query_result$AFR,"\n",
                  "European:",query_result$EUR,"\n",
                  "Southern Asian:",query_result$SAS)
+          clicked <<- TRUE
+          output$ui.download.click.info <- renderUI({
+            downloadButton('downloadtext', "Download Info of Selected SNP(s)")
+          })
+          out1
         }else{
-          paste0("SNP ID:",query_result$snpid,"\n",
-                 "REF:",query_result$REF,"\n",
+          out1 <<- paste0("SNP ID:",query_result$snpid,"\n",
+                 "REF:",query_result$REF," ALT:",query_result$ALT, "\n",
                  "Haplotype 2:",query_result$BaseCall,"\n",
                  "Position:",query_result$end,"\n",
                  "Variant Category:",query_result$status)
+          clicked <<- TRUE
+          output$ui.download.click.info <- renderUI({
+            downloadButton('downloadtext', "Download Info of Selected SNP(s)")
+          })
+          out1
         }
-      }else{
-        paste0("Please Click on SNPs for details")
+      }else if (length(query_idx) > 1){
+        ## for test
+        for (i in 1:length(query_idx)){
+          print(i)
+          print(query_idx[i])
+        }
+        
+        out <- NULL
+        for(i in 1:length(query_idx)){
+          query_result=temp_data[query_idx[i],]
+          tmp <- NULL
+          if (query_result$status!="Novel"){
+            tmp <- paste0("SNP #", i, " ID:",query_result$snpid,"\n",
+                          "REF:",query_result$REF," ALT:",query_result$ALT,"\n",
+                          "Haplotype 2:",query_result$BaseCall,"\n",
+                          "Position:",query_result$end,"\n",
+                          "Variant Category:",query_result$status,"\n",
+                          "Allele Frequency in 1000Genome:\n",
+                          "Eastern Asian:",query_result$EAS,"\n",
+                          "American:",query_result$AMR,"\n",
+                          "African:",query_result$AFR,"\n",
+                          "European:",query_result$EUR,"\n",
+                          "Southern Asian:",query_result$SAS)
+          }else{
+            tmp <- paste0("SNP #", i, " ID:",query_result$snpid,"\n",
+                          "REF:",query_result$REF," ALT:",query_result$ALT, "\n",
+                          "Haplotype 2:",query_result$BaseCall,"\n",
+                          "Position:",query_result$end,"\n",
+                          "Variant Category:",query_result$status)
+          }
+          if(i==1){
+            out <- tmp
+          } else {
+            out <- paste0(out, "\n", tmp)
+            
+          }
+        }
+        clicked <<- TRUE
+        output$ui.download.click.info <- renderUI({
+          downloadButton('downloadtext', "Download Info of Selected SNP(s)")
+        })
+        out1 <<- paste0(out)
+        paste0("There are more than one SNP's in the clicked area:", "\n", out)
+        
+      }
+      else{
+        out <- paste0("Please Click on SNP areas to view/download more details")
+        clicked <<- FALSE
+        out1 <<- NULL
+        output$ui.download.click.info <- renderUI({
+          NULL
+        })
+        out
       }
     }else if (input$plot_click$y<=1.2 && input$plot_click$y>=0.8 && input$plot_click$x>=mh_region$START && input$plot_click$x<=mh_region$END){
       query_haplotype="hap1"
       query=ceiling(input$plot_click$x)
       temp_data=figure_plot_data_single[figure_plot_data_single$haplotype==query_haplotype,]
-      query_idx=which(temp_data$end==query)
-      if (length(query_idx)>0){
+      query_idx=which(abs(temp_data$end-query) < 2.5)
+      if (length(query_idx)>0 & length(query_idx)<=1){
         query_result=temp_data[query_idx,]
         if (query_result$status!="Novel"){
-          paste0("SNP ID:",query_result$snpid,"\n",
+          out1 <<- paste0("SNP ID:",query_result$snpid,"\n",
                  "REF:",query_result$REF," ALT:",query_result$ALT,"\n",
                  "Haplotype 1:",query_result$BaseCall,"\n",
                  "Position:",query_result$end,"\n",
                  "Variant Category:",query_result$status,"\n",
-                 "Allele Frequency in 1000Genome\n",
+                 "Allele Frequency in 1000Genome:\n",
                  "Eastern Asian:",query_result$EAS,"\n",
                  "American:",query_result$AMR,"\n",
                  "African:",query_result$AFR,"\n",
                  "European:",query_result$EUR,"\n",
                  "Southern Asian:",query_result$SAS)
+          clicked <<- TRUE
+          output$ui.download.click.info <- renderUI({
+            downloadButton('downloadtext', "Download Info of Selected SNP(s)")
+          })
+          out1
         }else{
-          paste0("SNP ID:",query_result$snpid,"\n",
-                 "REF:",query_result$REF,"\n",
+          out1 <<- paste0("SNP ID:",query_result$snpid,"\n",
+                 "REF:",query_result$REF, " ALT:",query_result$ALT, "\n",
                  "Haplotype 1:",query_result$BaseCall,"\n",
                  "Position:",query_result$end,"\n",
-                 "Variant Category:",query_result$status,"\n"
-          )
+                 "Variant Category:",query_result$status)
+          clicked <<- TRUE
+          output$ui.download.click.info <- renderUI({
+            downloadButton('downloadtext', "Download Info of Selected SNP(s)")
+          })
+          out1
         }
+      }else if(length(query_idx) > 1){
+        out <- NULL
+        for(i in 1:length(query_idx)) {
+          query_result=temp_data[query_idx[i],]
+          tmp <- NULL
+          if (query_result$status!="Novel"){
+            tmp <- paste0("SNP #", i, " ID:",query_result$snpid,"\n",
+                   "REF:",query_result$REF," ALT:",query_result$ALT,"\n",
+                   "Haplotype 1:",query_result$BaseCall,"\n",
+                   "Position:",query_result$end,"\n",
+                   "Variant Category:",query_result$status,"\n",
+                   "Allele Frequency in 1000Genome:\n",
+                   "Eastern Asian:",query_result$EAS,"\n",
+                   "American:",query_result$AMR,"\n",
+                   "African:",query_result$AFR,"\n",
+                   "European:",query_result$EUR,"\n",
+                   "Southern Asian:",query_result$SAS)
+          }else{
+            tmp <- paste0("SNP #", i, " ID:",query_result$snpid,"\n",
+                   "REF:",query_result$REF,  " ALT:",query_result$ALT, "\n",
+                   "Haplotype 1:",query_result$BaseCall,"\n",
+                   "Position:",query_result$end,"\n",
+                   "Variant Category:",query_result$status)
+          }
+          if(i == 1) {
+            out <- tmp
+          } else {
+            out <- paste0(out, "\n", tmp)
+          }
+        }
+        clicked <<- TRUE
+        output$ui.download.click.info <- renderUI({
+          downloadButton('downloadtext', "Download Info of Selected SNP(s)")
+        })
+        out1 <<- paste0(out)
+        paste0("There are more than one SNP's in the clicked area:", "\n", out)
+        
       }else{
-        paste0("Please Click on SNPs for details")
+        out <- paste0("Please Click on SNP areas to view/download more details")
+        clicked <<- FALSE
+        out1 <<- NULL
+        output$ui.download.click.info <- renderUI({
+          NULL
+        })
+        out
       }
     }else{
-      paste0("Not valid search")
+      out <- paste0("Invalid search area")
+      clicked <<- FALSE
+      out1 <<- NULL
+      output$ui.download.click.info <- renderUI({
+        NULL
+      })
+      out
     }
   })
+  
+  
+  
   #Click information 2: base calling quality control statistics
   output$info2<- renderText({
     figure_plot_data_single<-figure_plot_all_data[intersect(which(figure_plot_all_data$MHapID==input$mh_region),
                                                             which(figure_plot_all_data$SampleID==input$sampleID)),]
+    out2 <<- NULL
     #based on input$plot_click$x and input$plot_click$y value, search and return details of the variant
     mh_region=microhaplotype_data[which(microhaplotype_data$Amplicon==input$mh_region),]#get mh_region data
     if (is.null(input$plot_click)){
@@ -201,68 +337,242 @@ function(input,output){
       query_haplotype="hap2"
       query=ceiling(input$plot_click$x)#get the coordinate
       temp_data=figure_plot_data_single[figure_plot_data_single$haplotype==query_haplotype,]#extract the data
-      query_idx=which(temp_data$end==query)#get correct index
-      if (length(query_idx)>0){
+      query_idx=which(abs(temp_data$end-query) < 2.5)#get correct index
+      if (length(query_idx)>0 & length(query_idx)<=1){
         query_result=temp_data[query_idx,]
-        paste0("Variant Calling QC Metric:\n",
+        out2 <<- paste0("Variant Calling QC Metric:\n",
                "Base Coverage:",query_result$ReadDepth,"\n",
-               "Heterozygous Ratio:",format(query_result$HetRatio,digits = 2),"\n",
-               "RefForward:",query_result$RefForward,"\n",
-               "RefReverse:",query_result$RefReverse,"\n",
-               "AltForward:",query_result$AltForward,"\n",
-               "AltReverse:",query_result$AltReverse,"\n")
-      }else{
-        paste0("Please Click on SNPs for details")
+               "Heterozygous Ratio:",format(query_result$HetRatio,digits = 2)
+               #"Heterozygous Ratio:",format(query_result$HetRatio,digits = 2), "\n",
+               #"RefForward:",query_result$RefForward,"\n",
+               #"RefReverse:",query_result$RefReverse,"\n",
+               #"AltForward:",query_result$AltForward,"\n",
+               #"AltReverse:",query_result$AltReverse)
+        )
+        out2
+      } else if(length(query_idx) > 1) {
+        out <- NULL
+        for (i in 1:length(query_idx)) {
+          query_result=temp_data[query_idx[i],]
+          tmp <- NULL
+          tmp <- paste0("Variant Calling QC Metric #", i, ":\n",
+                        "Base Coverage:",query_result$ReadDepth,"\n",
+                        "Heterozygous Ratio:",format(query_result$HetRatio,digits = 2)
+                        #"Heterozygous Ratio:",format(query_result$HetRatio,digits = 2),"\n",
+                        #"RefForward:",query_result$RefForward,"\n",
+                        #"RefReverse:",query_result$RefReverse,"\n",
+                        #"AltForward:",query_result$AltForward,"\n",
+                        #"AltReverse:",query_result$AltReverse)
+          )
+          if (i == 1) {
+            out <- tmp
+          } else {
+            out <- paste0(out, "\n", tmp)
+          }
+        }
+        out2 <<- paste0(out)
+        paste0("There are more than one SNP's in the clicked area:", "\n", out)
+      }
+      else{
+        paste0("Please Click on SNP areas to view/download more details")
+        out2 <<- NULL
       }
     }else if (input$plot_click$y<=1.2 && input$plot_click$y>=0.8 && input$plot_click$x>=mh_region$START && input$plot_click$x<=mh_region$END){
       query_haplotype="hap1"
       query=ceiling(input$plot_click$x)
       temp_data=figure_plot_data_single[figure_plot_data_single$haplotype==query_haplotype,]
-      query_idx=which(temp_data$end==query)
-      if (length(query_idx)>0){
+      query_idx=which(abs(temp_data$end-query) < 2.5)
+      if (length(query_idx)>0 & length(query_idx)<=1){
         query_result=temp_data[query_idx,]
-        paste0("Variant Calling QC Metric:\n",
+        out2 <<- paste0("Variant Calling QC Metric:\n",
                "Base Coverage:",query_result$ReadDepth,"\n",
-               "Heterozygous Ratio:",format(query_result$HetRatio,digits = 2),"\n",
-               "RefForward:",query_result$RefForward,"\n",
-               "RefReverse:",query_result$RefReverse,"\n",
-               "AltForward:",query_result$AltForward,"\n",
-               "AltReverse:",query_result$AltReverse,"\n")
-      }else{
-        paste0("Please Click on SNPs for details")
+               "Heterozygous Ratio:",format(query_result$HetRatio,digits = 2)
+               #"Heterozygous Ratio:",format(query_result$HetRatio,digits = 2),"\n",
+               #"RefForward:",query_result$RefForward,"\n",
+               #"RefReverse:",query_result$RefReverse,"\n",
+               #"AltForward:",query_result$AltForward,"\n",
+               #"AltReverse:",query_result$AltReverse)
+        )
+        out2
+        
+      } else if (length(query_idx) > 1) {
+        out <- NULL
+        for (i in 1:length(query_idx)) {
+          query_result=temp_data[query_idx[i],]
+          tmp <- NULL
+          tmp <- paste0("Variant Calling QC Metric #", i, ":\n",
+                        "Base Coverage:",query_result$ReadDepth,"\n",
+                        "Heterozygous Ratio:",format(query_result$HetRatio,digits = 2)
+                        #"Heterozygous Ratio:",format(query_result$HetRatio,digits = 2),"\n",
+                        #"RefForward:",query_result$RefForward,"\n",
+                        #"RefReverse:",query_result$RefReverse,"\n",
+                        #"AltForward:",query_result$AltForward,"\n",
+                        #"AltReverse:",query_result$AltReverse)
+          )
+          if (i == 1) {
+            out <- tmp
+          } else {
+            out <- paste0(out, "\n", tmp)
+          
+          }
+        }
+        out2 <<- paste0(out)
+        paste0("There are more than one SNP's in the clicked area:", "\n", out)
+      }
+      else{
+        paste0("Please Click on SNP areas to view/download more details")
+        out2 <<- NULL
       }
     }else{
-      paste0("Not valid search")
+      paste0("Invalid search area")
+      out2 <<- NULL
     }
   })
+  
+  #### download click info (SNP) ####
+  #output$ui.download.click.info <- renderUI({
+  #  if (is.null(input$plot_click)) return()
+  #  if (!clicked) return()
+    #req(input$plot_click, out1, clicked)
+    
+  #  downloadButton('downloadtext', "Download Info of Selected SNP(s)")
+  #})
+  
+  
+  output$downloadtext <- downloadHandler(filename = function() {
+    paste(input$sampleID, "_", input$mh_region, "_SNPinfo.txt", sep="")
+  }
+  , content = function(file) {
+    
+    out <- paste0(out1, "\n", out2)
+    #print(out1)
+    #print(out2)
+    #print(out)
+    write.table(out, file, row.names = FALSE, col.names = FALSE, quote = FALSE)
+  })
+  
+  #### download functions ####
+  output$ui.download.figure.simple <- renderUI({
+    downloadButton('downloadfiguresimple', "Download the Simplified Plot")
+  })
+  output$downloadfiguresimple <- downloadHandler(filename = function() {
+    paste(input$sampleID, "_", input$mh_region, "_simple_", Sys.Date(), ".pdf", sep="")
+  }
+  , content = function(file) {
+    
+    
+    each_sample_total_read=total_read()$Total[which(as.character(total_read()$SampleID)==input$sampleID)]
+    #get amplicon count data for this sample
+    amplicon_sample_idx=which(colnames(total_amplicon())==input$sampleID)
+    amplicon_idx=which(total_amplicon()$Amplicon==input$mh_region)
+    amplicon_total_read=total_amplicon()[amplicon_idx,amplicon_sample_idx]
+    #population of this sample
+    pop_info=input$population
+    #get mh_region data of this specific mh_region
+    mh_region=microhaplotype_data[which(microhaplotype_data$Amplicon==input$mh_region),]
+    #extract single sample data from given MH and sample name
+    figure_plot_data_single<-figure_plot_all_data[intersect(which(figure_plot_all_data$MHapID==input$mh_region),
+                                                            which(figure_plot_all_data$SampleID==input$sampleID)),]
+    pdf(file, width = 12, height = 3.5)
+    
+    print(plot_microhaplotype_figure_simple(converted_snp_for_plot = figure_plot_data_single,
+                                            mh_region = mh_region,
+                                            pop_info = pop_info,
+                                            each_sample_total_read = each_sample_total_read,
+                                            amplicon_total_read = amplicon_total_read,
+                                            input$sampleID))
+    dev.off()
+  })
+  
+  output$ui.download.figure.complete <- renderUI({
+    downloadButton('downloadfigurecomplete', "Download the Complete Plot")
+  })
+  output$downloadfigurecomplete <- downloadHandler(filename = function() {
+    paste(input$sampleID, "_", input$mh_region, "_complete_", Sys.Date(), ".pdf", sep="")
+  }
+  , content = function(file) {
+    
+    
+    each_sample_total_read=total_read()$Total[which(as.character(total_read()$SampleID)==input$sampleID)]
+    #get amplicon count data for this sample
+    amplicon_sample_idx=which(colnames(total_amplicon())==input$sampleID)
+    amplicon_idx=which(total_amplicon()$Amplicon==input$mh_region)
+    amplicon_total_read=total_amplicon()[amplicon_idx,amplicon_sample_idx]
+    #population of this sample
+    pop_info=input$population
+    #get mh_region data of this specific mh_region
+    mh_region=microhaplotype_data[which(microhaplotype_data$Amplicon==input$mh_region),]
+    #extract single sample data from given MH and sample name
+    figure_plot_data_single<-figure_plot_all_data[intersect(which(figure_plot_all_data$MHapID==input$mh_region),
+                                                            which(figure_plot_all_data$SampleID==input$sampleID)),]
+    pdf(file, width = 12, height = 4.5)
+    
+    print(plot_microhaplotype_figure_complete(converted_snp_for_plot = figure_plot_data_single,
+                                              mh_region = mh_region,
+                                              pop_info = pop_info,
+                                              each_sample_total_read = each_sample_total_read,
+                                              amplicon_total_read = amplicon_total_read,
+                                              input$sampleID))
+    dev.off()
+  })
+  
   ##########Plot multiple MH_sample data simultaneously
   #render multiple plots if we observe change of mh region and population widget
   #output is a global variable
-  observeEvent(input$mh_region3,renderPlots(input$population2,input$mh_region3,total_read(),total_amplicon(),all_sample_name,microhaplotype_data,figure_plot_all_data,output))
-  observeEvent(input$population2,renderPlots(input$population2,input$mh_region3,total_read(),total_amplicon(),all_sample_name,microhaplotype_data,figure_plot_all_data,output))
+  observeEvent(input$mh_region2,renderPlots(input$population2,input$mh_region2,total_read(),total_amplicon(),all_sample_name,microhaplotype_data,figure_plot_all_data,output))
+  observeEvent(input$population2,renderPlots(input$population2,input$mh_region2,total_read(),total_amplicon(),all_sample_name,microhaplotype_data,figure_plot_all_data,output))
   #combine these plots together and display them on the webpage
   output$mh_figure_all <- renderUI({
-    makePlotContainers(input$population2,input$mh_region3,all_sample_name)
+    makePlotContainers(input$population2,input$mh_region2,all_sample_name)
   })
+  
   ###########Show table of microhaplotype SNP data
   table_data=reactive({tbl=read.table(paste0("./www/data/pooled_vcf/mh_table/",
-                                             input$mh_region2,
+                                             input$mh_region3,
                                              "_snps_detail.txt"),
                                       header=TRUE)
+  # colnames(tbl) <- c("MHapID", "Chr", "gene_or_locus", "SampleID", "Population", "snpid", "POS", "REF", "ALT", "genotype", "VariantCategory", "EAS", "AMR", "AFR", "EUR", "SAS", "ReadDepthQCPass", "HetRatioQCPass")
   return(tbl)})
-  output$mh_table<-DT::renderDataTable({datatable(table_data()) %>% formatStyle(columns='ReadDepthQCPass',
-                                                                                color = styleEqual(c("Y","N"),
-                                                                                                   c("black","red"))) %>% 
-      formatStyle(columns='HetRatioQCPass',
-                  color = styleEqual(c("Y","N"),
-                                     c("black","red")))})
+  output$mh_table<-DT::renderDataTable({datatable(table_data(), extensions = c('Buttons'), 
+                                                  options = list(
+                                                    autoWidth = TRUE,
+                                                    columnDefs = list(list(width = '120px', targets = 1),
+                                                                      list(className = 'dt-center', targets = '_all')),
+                                                    scrollX=TRUE, scrollY=650,
+                                                    pageLength = 100, lengthMenu = c(20, 50, 100, 200, 500, 1000),
+                                                    dom = 'Blfrtip',
+                                                    buttons = list(list(extend = 'copy', title = NULL), 
+                                                                   list(extend = 'csv', filename = paste0(input$mh_region3, "_SNP_table")))
+                                                    
+                                                    
+                                                  )) %>% formatStyle(columns='ReadDepthQCPass',
+                                                                     color = styleEqual(c("Y","N"),
+                                                                                        c("black","red"))) %>% formatStyle(columns='HetRatioQCPass',
+                                                                                                                           color = styleEqual(c("Y","N"),
+                                                                                                                                              c("black","red")))}
+  )
+  
+###### download mh table data according to search result #####
+#  output$ui.download.mh.table <- renderUI({
+#    downloadButton('downloadmhtable', "Download the Search Result")
+#  })
+#  
+#  output$downloadmhtable <- downloadHandler(filename = function() {
+#    paste(input$mh_region, "_SNP_table.txt", sep="")
+#  }
+#  , content = function(file) {
+#    write.table(table_data(), file, sep = ",", row.names = FALSE)
+#  })
+######
+  
+  
   ###########Show table of microhaplotype frequency table
   haplotype_data=reactive({freq_tbl=read.table(paste0("./www/data/pooled_vcf/mh_frequency/",
                                                       input$mh_region4,
                                                       "_haplotype.txt"),header=TRUE)
   return(freq_tbl)})#read raw haplotype data
   output$mh_frequency_table<-DT::renderDataTable({
-    temp_table=haplotype_data()[which(haplotype_data()$population==input$population3),]
+    temp_table=haplotype_data()[which(haplotype_data()$population==input$population4),]
     temp_summary=summary(as.factor(c(as.character(temp_table$Hap1),as.character(temp_table$Hap2))))
     
     out_table=data.frame("haplotype"=sapply(names(temp_summary),FUN = convert_to_haplotype),"count"=temp_summary,"frequency"=round(temp_summary/sum(temp_summary),3))
@@ -275,13 +585,43 @@ function(input,output){
     # }
     #out_table=cbind(out_table,"sample_count"=no_sample_vec)
     out_table=rbind(out_table,data.frame("haplotype"="Total","count"=sum(temp_summary),"frequency"=sum(temp_summary/sum(temp_summary))))#"sample_count"=sum(no_sample_vec)))
-    DT::datatable(out_table,rownames = FALSE,options=list(pageLength=20),width = 400)
+    DT::datatable(out_table, extensions = c('Buttons'),
+                  rownames = FALSE,
+                  options=list(autoWidth = TRUE,
+                               pageLength= 50, lengthMenu = c(10, 20, 50, 100, 200),
+                               scrollY=TRUE,
+                               dom = 'Blfrtip',
+                               buttons = list(list(extend = 'copy', title = NULL), 
+                                              list(extend = 'csv', filename = paste0(input$mh_region4, "_", input$population4, "_freq_table")))))
   })
+  
   #########QC figures for all three runs: use renderUI() to generate corresponding HTML tags or taglist  
   output$qc_measure<-renderUI(
-    #generate the tag to load pdf file
-    tags$iframe(style="height:1000px; width:100%", 
-                src=paste0("data/",input$dataset,"/qc/",input$qc_pdf,".pdf")))
+    if (input$qc_pdf == "Base pair coverage") {
+      #generate the tag to load pdf file
+      tags$iframe(style="height:750px; width:100%", 
+                  #src=paste0("data/",input$dataset,"/qc/",input$qc_pdf,".pdf")))
+                  src=paste0("data/pooled_vcf/qc/base_coverage", ".pdf"))
+    }
+    else if (input$qc_pdf == "Amplicon coverage by amplicon") {
+      #generate the tag to load pdf file
+      tags$iframe(style="height:750px; width:100%", 
+                  #                src=paste0("data/",input$dataset,"/qc/",input$qc_pdf,".pdf")))
+                  src=paste0("data/pooled_vcf/qc/123", ".pdf"))
+    }
+    else if (input$qc_pdf == "Amplicon coverage by sample") {
+      tags$iframe(style="height:750px; width:100%", 
+                  #                src=paste0("data/",input$dataset,"/qc/",input$qc_pdf,".pdf")))
+                  src=paste0("data/pooled_vcf/qc/amplicon_coverage_by_sample", ".pdf"))
+    }
+    else if (input$qc_pdf == "Sample coverage") {
+      tags$iframe(style="height:750px; width:100%", 
+                  #                src=paste0("data/",input$dataset,"/qc/",input$qc_pdf,".pdf")))
+                  src=paste0("data/pooled_vcf/qc/sample_coverage", ".pdf"))
+    }
+    
+  )
+  
   
 }
 #Load data

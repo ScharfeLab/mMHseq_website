@@ -3,12 +3,13 @@
 #############Set up necessary files
 rm(list=ls())
 
-
-setwd("/Users/iris/Downloads/mMHseq data/Yishuo_website_generate_data/")
+# set input directory
+work_directory = "/Users/iris/Downloads/mMHseq data/Yishuo_website_generate_data/"
+setwd(work_directory)
 source("generate_website_data_lib.r")
-resource_dir="/Users/iris/Downloads/mMHseq data/Yishuo_website_generate_data/MH_information_folder/" #resource dir for MH and sample information
-all_vcf_file="/Users/iris/Downloads/mMHseq data/Yishuo_website_generate_data/Test_data/all_filtered.vcf" #where phased sample is placed
-individual_vcf_dir="/Users/iris/Downloads/mMHseq data/Yishuo_website_generate_data/Test_data/filtered_and_phased/"
+resource_dir= paste(work_directory, "MH_information_folder/", sep = "") #resource dir for MH and sample information
+all_vcf_file= paste(work_directory,"Test_data/all_filtered.vcf", sep = "") #where phased sample is placed
+individual_vcf_dir= paste(work_directory, "Test_data/_phased/", sep = "") 
 ken_mh_loc=read.xls(paste0(resource_dir,"Ken_MH_dbSNP.xlsx"))#contains the chromosome and gene information
 all_sample_info=read.table(paste0(resource_dir,"all_sample_name.txt"),header=TRUE,stringsAsFactors = FALSE)
 #Load 90 MH hg19 genomic coordinate (No primer)
@@ -16,7 +17,9 @@ microhaplotype_data=read.table(paste0(resource_dir,"mMHseq_90amp_no_primer.bed")
 colnames(microhaplotype_data)=c("CHROM","START","END","Amplicon")#,"left_primer_start","left_primer_end","right_primer_start","right_primer_end")
 #Load Ken's SNP information on each MH
 ken_dbsnp=read.xls(paste0(resource_dir,"Ken_90MH_dbSNP.xlsx"))#Ken's known snp ID on 96 MH region
-output_website_dir="/Users/iris/Documents/mMHseq_generated_data_3/"
+
+# set output directory
+output_website_dir="/Users/iris/Documents/mMHseq_generated_data_test/"
 
 
 

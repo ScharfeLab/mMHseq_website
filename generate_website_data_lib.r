@@ -259,14 +259,14 @@ convert_to_text_for_plot<-function(snp_data_frame,
     #get het ratio information
     temp_full_info=as.character(each_sample_mh_genotype[each_line,dim(each_sample_mh_genotype)[2]])
     het_ratio=unlist(strsplit(temp_full_info,":"))[2]
-    if (snp_data_frame$known[each_line]=="NewInDatabase"){# && snp_data_frame$known[each_line]!="LeftPrimer" && snp_data_frame$known[each_line] !="RightPrimer"){
+    if (snp_data_frame$known[each_line]=="dbSNP"){# && snp_data_frame$known[each_line]!="LeftPrimer" && snp_data_frame$known[each_line] !="RightPrimer"){
       if (temp_geno[1]!=ref_base || temp_geno[2]!=ref_base){#The genotype contains non-reference base
         out2=rbind(out2,cbind(snp_data_frame[each_line,],
                               "SampleID"=samplename,
                               "Population"=pop_info,
                               "VariantCategory"="dbSNP"))
       }
-    }else if (snp_data_frame$known[each_line]=="NewNotRecorded"){
+    }else if (snp_data_frame$known[each_line]=="Novel"){
       if (temp_geno[1]!=ref_base || temp_geno[2]!=ref_base){
         out2=rbind(out2,cbind(snp_data_frame[each_line,],
                               "SampleID"=samplename,
