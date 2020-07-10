@@ -2,15 +2,17 @@ library(shiny)
 library(DT)
 library(markdown)
 
-all_amp_name=read.table("all_90_amplicon_name.txt",header=FALSE)
-all_sample_name=read.table("all_sample_name.txt",header=TRUE)
-all_pop_name = read.table("all_population_name.txt", header = FALSE)
+all_amp_name=read.table("all_90_amplicon_name.txt", header=FALSE)
+all_sample_name=read.table("all_sample_name.txt", header=TRUE)
+all_pop_name = sort(unique(all_sample_name$population))
+
+
 fluidPage(
   #create UI for the application
   #input variable will be defined here and calculated in server() function
   #output plot returned from server() function should be displayed in main panel defined here.
   #Use multi-tab set up
-  titlePanel("mMHseq", title = "Multiplex Microhaplotype Sequencing (mMHseq)"),
+  titlePanel("mMHseq Full", title = "Multiplex Microhaplotype Sequencing (mMHseq)"),
   tabsetPanel(
     tabPanel("MH individual figure",
              sidebarLayout(
@@ -20,11 +22,11 @@ fluidPage(
                                                  choices = as.character(all_amp_name$V1)))),
                             fluidRow(column(12, selectInput(inputId="population",
                                                  label="Population",
-                                                 choices= as.character(sort(unique(all_pop_name$V1)))))),#select population
+                                                 choices= as.character(all_pop_name)))),#select population
                             fluidRow(column(12, htmlOutput("selectSample"))),#select sample ID
                  
                  # left side bar width = 2           
-                 fluidRow(tags$img(style="height:100 px; width:80%", src='image/color_legend.png')),
+                 fluidRow(tags$img(style="height:80 px; width:90%", src='image/color_legend.png')),
                  width = 2
                  # left side bar width = 3
                  # fluidRow(tags$img(style="height:100 px; width:55%", src='image/color_legend.png')),
@@ -59,13 +61,12 @@ fluidPage(
                                                  label="Population",
                                                  #width = "95%",
                                                  
-                                                 choices=as.character(sort(unique(all_pop_name$V1)))))),#select population
- 
+                                                 choices=as.character(all_pop_name)))),#select population
                             includeMarkdown("content/Population_tab.md"),
                             #br(),
                             
                             # left side bar width = 2           
-                            fluidRow(tags$img(style="height:100 px; width:80%", src='image/color_legend.png')),
+                            fluidRow(tags$img(style="height:80 px; width:90%", src='image/color_legend.png')),
                             width = 2
                             # left side bar width = 3
                             # fluidRow(tags$img(style="height:100 px; width:55%", src='image/color_legend.png')),
@@ -94,7 +95,7 @@ fluidPage(
                                         choices=as.character(all_amp_name$V1)),
                             selectInput(inputId="population4",
                                         label="Population",
-                                        choices=as.character(sort(unique(all_pop_name$V1)))),
+                                        choices=as.character(all_pop_name)),
                             width = 2
                ),
                mainPanel(DT::dataTableOutput("mh_frequency_table")))

@@ -2,6 +2,7 @@ library(shiny)
 library(shinyjs)
 library(DT)
 source("helpers.R")
+all_position = read.table("positions.txt", header = TRUE)
 
 # relate to text download functionality
 clicked <- FALSE
@@ -143,31 +144,60 @@ function(input,output){
       temp_data=figure_plot_data_single[figure_plot_data_single$haplotype==query_haplotype,]#extract the data
       query_idx=which(abs(temp_data$end-query) < 2.5)#get correct index
       if (length(query_idx)>0 & length(query_idx)<=1){
-        print(query_idx)
+        #print(query_idx)
         query_result=temp_data[query_idx,]
         if (query_result$status!="Novel"){
-          out1 <<- paste0("SNP ID:",query_result$snpid,"\n",
-                 "REF:",query_result$REF," ALT:",query_result$ALT,"\n",
-                 "Haplotype 2:",query_result$BaseCall,"\n",
-                 "Position:",query_result$end,"\n",
-                 "Variant Category:",query_result$status,"\n",
-                 "Allele Frequency in 1000Genome:\n",
-                 "Eastern Asian:",query_result$EAS,"\n",
-                 "American:",query_result$AMR,"\n",
-                 "African:",query_result$AFR,"\n",
-                 "European:",query_result$EUR,"\n",
-                 "Southern Asian:",query_result$SAS)
+          if (query_result$status=="Ancestral" | query_result$status == "Ancestral_placeholder"){
+            out1 <<- paste0("SNP ID: ",query_result$snpid,"\n",
+                            "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                            "Haplotype 2: ",query_result$BaseCall,"\n",
+                            "Position: ",query_result$end,"\n",
+                            "Variant Category: ", "Reference", "\n",
+                            "Allele Frequency in 1000Genome:\n",
+                            "Eastern Asian: ",query_result$EAS,"\n",
+                            "American: ",query_result$AMR,"\n",
+                            "African: ",query_result$AFR,"\n",
+                            "European: ",query_result$EUR,"\n",
+                            "Southern Asian: ",query_result$SAS)
+          }
+          else if (query_result$status=="Derived" | query_result$status=="dbSNP"){
+            out1 <<- paste0("SNP ID: ",query_result$snpid,"\n",
+                            "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                            "Haplotype 2: ",query_result$BaseCall,"\n",
+                            "Position: ",query_result$end,"\n",
+                            "Variant Category: ", "Alternate", "\n",
+                            "Allele Frequency in 1000Genome:\n",
+                            "Eastern Asian: ",query_result$EAS,"\n",
+                            "American: ",query_result$AMR,"\n",
+                            "African: ",query_result$AFR,"\n",
+                            "European: ",query_result$EUR,"\n",
+                            "Southern Asian: ",query_result$SAS)
+          }
+          else if (query_result$status=="NovelCP" | query_result$status=="Purple" | query_result$status == "Purple_placeholder"){
+            out1 <<- paste0("SNP ID: ",query_result$snpid,"\n",
+                            "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                            "Haplotype 2: ",query_result$BaseCall,"\n",
+                            "Position: ",query_result$end,"\n",
+                            "Variant Category: ", "Reference", "\n", # novel reference
+                            "Allele Frequency in 1000Genome:\n",
+                            "Eastern Asian: ",query_result$EAS,"\n",
+                            "American: ",query_result$AMR,"\n",
+                            "African: ",query_result$AFR,"\n",
+                            "European: ",query_result$EUR,"\n",
+                            "Southern Asian: ",query_result$SAS)
+          }
+          
           clicked <<- TRUE
           output$ui.download.click.info <- renderUI({
             downloadButton('downloadtext', "Download Info of Selected SNP(s)")
           })
           out1
         }else{
-          out1 <<- paste0("SNP ID:",query_result$snpid,"\n",
-                 "REF:",query_result$REF," ALT:",query_result$ALT, "\n",
-                 "Haplotype 2:",query_result$BaseCall,"\n",
-                 "Position:",query_result$end,"\n",
-                 "Variant Category:",query_result$status)
+          out1 <<- paste0("SNP ID: ",query_result$snpid,"\n",
+                 "REF: ",query_result$REF," ALT: ",query_result$ALT, "\n",
+                 "Haplotype 2: ",query_result$BaseCall,"\n",
+                 "Position: ",query_result$end,"\n",
+                 "Variant Category: ",query_result$status)
           clicked <<- TRUE
           output$ui.download.click.info <- renderUI({
             downloadButton('downloadtext', "Download Info of Selected SNP(s)")
@@ -177,8 +207,10 @@ function(input,output){
       }else if (length(query_idx) > 1){
         ## for test
         for (i in 1:length(query_idx)){
-          print(i)
-          print(query_idx[i])
+          print("hap2")
+          print(paste0("length of query_idx = ", length(query_idx)))
+          print(paste0("i = ", i))
+          print(paste0("query_idx = ", query_idx[i]))
         }
         
         out <- NULL
@@ -186,17 +218,45 @@ function(input,output){
           query_result=temp_data[query_idx[i],]
           tmp <- NULL
           if (query_result$status!="Novel"){
-            tmp <- paste0("SNP #", i, " ID:",query_result$snpid,"\n",
-                          "REF:",query_result$REF," ALT:",query_result$ALT,"\n",
-                          "Haplotype 2:",query_result$BaseCall,"\n",
-                          "Position:",query_result$end,"\n",
-                          "Variant Category:",query_result$status,"\n",
+            if (query_result$status=="Ancestral" | query_result$status == "Ancestral_placeholder"){
+            tmp <- paste0("SNP #", i, " ID: ",query_result$snpid,"\n",
+                          "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                          "Haplotype 2: ",query_result$BaseCall,"\n",
+                          "Position: ",query_result$end,"\n",
+                          "Variant Category: ","Reference", "\n",
                           "Allele Frequency in 1000Genome:\n",
-                          "Eastern Asian:",query_result$EAS,"\n",
-                          "American:",query_result$AMR,"\n",
-                          "African:",query_result$AFR,"\n",
-                          "European:",query_result$EUR,"\n",
-                          "Southern Asian:",query_result$SAS)
+                          "Eastern Asian: ",query_result$EAS,"\n",
+                          "American: ",query_result$AMR,"\n",
+                          "African: ",query_result$AFR,"\n",
+                          "European: ",query_result$EUR,"\n",
+                          "Southern Asian: ",query_result$SAS)
+            }
+            else if (query_result$status=="Derived" | query_result$status=="dbSNP"){
+              tmp <- paste0("SNP #", i, " ID: ",query_result$snpid,"\n",
+                            "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                            "Haplotype 2: ",query_result$BaseCall,"\n",
+                            "Position: ",query_result$end,"\n",
+                            "Variant Category: ","Alternate", "\n",
+                            "Allele Frequency in 1000Genome:\n",
+                            "Eastern Asian: ",query_result$EAS,"\n",
+                            "American: ",query_result$AMR,"\n",
+                            "African: ",query_result$AFR,"\n",
+                            "European: ",query_result$EUR,"\n",
+                            "Southern Asian: ",query_result$SAS)
+            }
+            else if (query_result$status=="NovelCP" | query_result$status=="Purple" | query_result$status=="Purple_placeholder"){
+              tmp <- paste0("SNP #", i, " ID: ",query_result$snpid,"\n",
+                            "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                            "Haplotype 2: ",query_result$BaseCall,"\n",
+                            "Position: ",query_result$end,"\n",
+                            "Variant Category: ","Reference", "\n", # novel reference
+                            "Allele Frequency in 1000Genome:\n",
+                            "Eastern Asian: ",query_result$EAS,"\n",
+                            "American: ",query_result$AMR,"\n",
+                            "African: ",query_result$AFR,"\n",
+                            "European: ",query_result$EUR,"\n",
+                            "Southern Asian: ",query_result$SAS)
+            }
           }else{
             tmp <- paste0("SNP #", i, " ID:",query_result$snpid,"\n",
                           "REF:",query_result$REF," ALT:",query_result$ALT, "\n",
@@ -236,28 +296,58 @@ function(input,output){
       if (length(query_idx)>0 & length(query_idx)<=1){
         query_result=temp_data[query_idx,]
         if (query_result$status!="Novel"){
-          out1 <<- paste0("SNP ID:",query_result$snpid,"\n",
-                 "REF:",query_result$REF," ALT:",query_result$ALT,"\n",
-                 "Haplotype 1:",query_result$BaseCall,"\n",
-                 "Position:",query_result$end,"\n",
-                 "Variant Category:",query_result$status,"\n",
+          if (query_result$status=="Ancestral" | query_result$status=="Ancestral_placeholder"){
+          out1 <<- paste0("SNP ID: ",query_result$snpid,"\n",
+                 "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                 "Haplotype 1: ",query_result$BaseCall,"\n",
+                 "Position: ",query_result$end,"\n",
+                 "Variant Category: ", "Reference" ,"\n",
                  "Allele Frequency in 1000Genome:\n",
-                 "Eastern Asian:",query_result$EAS,"\n",
-                 "American:",query_result$AMR,"\n",
-                 "African:",query_result$AFR,"\n",
-                 "European:",query_result$EUR,"\n",
-                 "Southern Asian:",query_result$SAS)
+                 "Eastern Asian: ",query_result$EAS,"\n",
+                 "American: ",query_result$AMR,"\n",
+                 "African: ",query_result$AFR,"\n",
+                 "European: ",query_result$EUR,"\n",
+                 "Southern Asian: ",query_result$SAS)
+          } 
+          else if (query_result$status=="Derived" | query_result$status=="dbSNP"){
+            out1 <<- paste0("SNP ID: ",query_result$snpid,"\n",
+                            "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                            "Haplotype 1: ",query_result$BaseCall,"\n",
+                            "Position: ",query_result$end,"\n",
+                            "Variant Category: ", "Alternate" ,"\n",
+                            "Allele Frequency in 1000Genome:\n",
+                            "Eastern Asian: ",query_result$EAS,"\n",
+                            "American: ",query_result$AMR,"\n",
+                            "African: ",query_result$AFR,"\n",
+                            "European: ",query_result$EUR,"\n",
+                            "Southern Asian: ",query_result$SAS)
+            
+          }
+          else if (query_result$status=="NovelCP" | query_result$status=="Purple" | query_result$status=="Purple_placeholder"){
+            out1 <<- paste0("SNP ID: ",query_result$snpid,"\n",
+                            "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                            "Haplotype 1: ",query_result$BaseCall,"\n",
+                            "Position: ",query_result$end,"\n",
+                            "Variant Category: ", "Reference" ,"\n", # novel reference
+                            "Allele Frequency in 1000Genome:\n",
+                            "Eastern Asian: ",query_result$EAS,"\n",
+                            "American: ",query_result$AMR,"\n",
+                            "African: ",query_result$AFR,"\n",
+                            "European: ",query_result$EUR,"\n",
+                            "Southern Asian: ",query_result$SAS)
+            
+          }
           clicked <<- TRUE
           output$ui.download.click.info <- renderUI({
             downloadButton('downloadtext', "Download Info of Selected SNP(s)")
           })
           out1
         }else{
-          out1 <<- paste0("SNP ID:",query_result$snpid,"\n",
-                 "REF:",query_result$REF, " ALT:",query_result$ALT, "\n",
-                 "Haplotype 1:",query_result$BaseCall,"\n",
-                 "Position:",query_result$end,"\n",
-                 "Variant Category:",query_result$status)
+          out1 <<- paste0("SNP ID: ",query_result$snpid,"\n",
+                 "REF: ",query_result$REF, " ALT: ",query_result$ALT, "\n",
+                 "Haplotype 1: ",query_result$BaseCall,"\n",
+                 "Position: ",query_result$end,"\n",
+                 "Variant Category: ",query_result$status)
           clicked <<- TRUE
           output$ui.download.click.info <- renderUI({
             downloadButton('downloadtext', "Download Info of Selected SNP(s)")
@@ -265,28 +355,64 @@ function(input,output){
           out1
         }
       }else if(length(query_idx) > 1){
+        # test
+        for (i in 1:length(query_idx)) {
+          print("hap1")
+          print(paste0("length of query_idx = ", length(query_idx)))
+          print(paste0("i = ", i))
+          print(paste0("query_idx = ", query_idx[i]))
+        }
+        
         out <- NULL
         for(i in 1:length(query_idx)) {
           query_result=temp_data[query_idx[i],]
           tmp <- NULL
           if (query_result$status!="Novel"){
-            tmp <- paste0("SNP #", i, " ID:",query_result$snpid,"\n",
-                   "REF:",query_result$REF," ALT:",query_result$ALT,"\n",
-                   "Haplotype 1:",query_result$BaseCall,"\n",
-                   "Position:",query_result$end,"\n",
-                   "Variant Category:",query_result$status,"\n",
+            if (query_result$status=="Ancestral" | query_result$status=="Ancestral_placeholder"){
+            tmp <- paste0("SNP #", i, " ID: ",query_result$snpid,"\n",
+                   "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                   "Haplotype 1: ",query_result$BaseCall,"\n",
+                   "Position: ",query_result$end,"\n",
+                   "Variant Category: ", "Reference", "\n",
                    "Allele Frequency in 1000Genome:\n",
-                   "Eastern Asian:",query_result$EAS,"\n",
-                   "American:",query_result$AMR,"\n",
-                   "African:",query_result$AFR,"\n",
-                   "European:",query_result$EUR,"\n",
-                   "Southern Asian:",query_result$SAS)
+                   "Eastern Asian: ",query_result$EAS,"\n",
+                   "American: ",query_result$AMR,"\n",
+                   "African: ",query_result$AFR,"\n",
+                   "European: ",query_result$EUR,"\n",
+                   "Southern Asian: ",query_result$SAS)
+            }
+            else if (query_result$status=="Derived" | query_result$status=="dbSNP"){
+              tmp <- paste0("SNP #", i, " ID: ",query_result$snpid,"\n",
+                            "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                            "Haplotype 1: ",query_result$BaseCall,"\n",
+                            "Position: ",query_result$end,"\n",
+                            "Variant Category: ", "Alternate", "\n",
+                            "Allele Frequency in 1000Genome:\n",
+                            "Eastern Asian: ",query_result$EAS,"\n",
+                            "American: ",query_result$AMR,"\n",
+                            "African: ",query_result$AFR,"\n",
+                            "European: ",query_result$EUR,"\n",
+                            "Southern Asian: ",query_result$SAS)
+            }
+            else if (query_result$status=="NovelCP" | query_result$status=="Purple" | query_result$status=="Purple_placeholder"){
+              tmp <- paste0("SNP #", i, " ID: ",query_result$snpid,"\n",
+                            "REF: ",query_result$REF," ALT: ",query_result$ALT,"\n",
+                            "Haplotype 1: ",query_result$BaseCall,"\n",
+                            "Position: ",query_result$end,"\n",
+                            "Variant Category: ", "Reference", "\n", # novel reference
+                            "Allele Frequency in 1000Genome:\n",
+                            "Eastern Asian: ",query_result$EAS,"\n",
+                            "American: ",query_result$AMR,"\n",
+                            "African: ",query_result$AFR,"\n",
+                            "European: ",query_result$EUR,"\n",
+                            "Southern Asian: ",query_result$SAS)
+            }
           }else{
-            tmp <- paste0("SNP #", i, " ID:",query_result$snpid,"\n",
-                   "REF:",query_result$REF,  " ALT:",query_result$ALT, "\n",
-                   "Haplotype 1:",query_result$BaseCall,"\n",
-                   "Position:",query_result$end,"\n",
-                   "Variant Category:",query_result$status)
+            tmp <- paste0("SNP #", i, " ID: ",query_result$snpid,"\n",
+                   "REF: ",query_result$REF,  " ALT: ",query_result$ALT, "\n",
+                   "Haplotype 1: ",query_result$BaseCall,"\n",
+                   "Position: ",query_result$end,"\n",
+                   "Variant Category: ",query_result$status)
           }
           if(i == 1) {
             out <- tmp
@@ -539,7 +665,7 @@ function(input,output){
                                                     columnDefs = list(list(width = '120px', targets = 1),
                                                                       list(className = 'dt-center', targets = '_all')),
                                                     scrollX=TRUE, scrollY=650,
-                                                    pageLength = 100, lengthMenu = c(20, 50, 100, 200, 500, 1000),
+                                                    pageLength = 50, lengthMenu = c(10, 20, 50, 100),
                                                     dom = 'Blfrtip',
                                                     buttons = list(list(extend = 'copy', title = NULL), 
                                                                    list(extend = 'csv', filename = paste0(input$mh_region3, "_SNP_table")))
@@ -574,8 +700,11 @@ function(input,output){
   output$mh_frequency_table<-DT::renderDataTable({
     temp_table=haplotype_data()[which(haplotype_data()$population==input$population4),]
     temp_summary=summary(as.factor(c(as.character(temp_table$Hap1),as.character(temp_table$Hap2))))
+    print(temp_summary)
     
-    out_table=data.frame("haplotype"=sapply(names(temp_summary),FUN = convert_to_haplotype),"count"=temp_summary,"frequency"=round(temp_summary/sum(temp_summary),3))
+    out_position = data.frame("position_haplotype" = all_position$position[which(all_position$MHap == input$mh_region4)], "count" = NA, "frequency" = NA)
+    out_table= data.frame("position_haplotype"=sapply(names(temp_summary),FUN = convert_to_haplotype),"count"=temp_summary,"frequency"=round(temp_summary/sum(temp_summary),3))
+    out_table = rbind(out_position, out_table)
     # no_sample_vec=c()
     # for (i in 1:dim(out_table)[1]){
     #   temp_query=as.character(out_table$haplotype[i])
@@ -584,11 +713,11 @@ function(input,output){
     #   no_sample_vec=c(no_sample_vec,length(unique(temp_sample_name)))
     # }
     #out_table=cbind(out_table,"sample_count"=no_sample_vec)
-    out_table=rbind(out_table,data.frame("haplotype"="Total","count"=sum(temp_summary),"frequency"=sum(temp_summary/sum(temp_summary))))#"sample_count"=sum(no_sample_vec)))
+    out_table=rbind(out_table,data.frame("position_haplotype"="Total","count"=sum(temp_summary),"frequency"=sum(temp_summary/sum(temp_summary))))#"sample_count"=sum(no_sample_vec)))
     DT::datatable(out_table, extensions = c('Buttons'),
                   rownames = FALSE,
                   options=list(autoWidth = TRUE,
-                               pageLength= 50, lengthMenu = c(10, 20, 50, 100, 200),
+                               pageLength= 50, lengthMenu = c(10, 20, 50),
                                scrollY=TRUE,
                                dom = 'Blfrtip',
                                buttons = list(list(extend = 'copy', title = NULL), 

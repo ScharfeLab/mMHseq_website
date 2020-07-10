@@ -27,7 +27,8 @@ return_snp_summary_info<-function(micro_haplotype_coord,
       #The SNP does not fall on primer region
       if (as.numeric(snp_data$POS[i]) %in% seq(micro_haplotype_coord$START,micro_haplotype_coord$END)){
         #determine if this SNP is in Ken's list or not
-        if (snp_data$ID[i] %in% known_snp_id$snpid){
+        if ((snp_data$ID[i] %in% known_snp_id$snpid) & (as.character(snp_data$ID[i])!=".")){
+          #print("1 Ken")
           temp=data.frame(snpid=as.character(snp_data$ID[i]),
                           region=micro_haplotype_coord$Amplicon,
                           "known"="Ken",
@@ -37,13 +38,16 @@ return_snp_summary_info<-function(micro_haplotype_coord,
         }else{
           #determine if the snp is in 1000genome or not
           if (snp_data$ID[i] %in% pubic_database_id$ID){
+            #print("2 dbSNP")
             in_1000genome=in_1000genome+1
             temp=data.frame(snpid=as.character(snp_data$ID[i]),region=micro_haplotype_coord$Amplicon,"known"="dbSNP","POS"=snp_data$POS[i])
           }else{
             if (as.character(snp_data$ID[i])=="."){
+              #print("3 Novel")
               temp=data.frame(snpid=as.character(snp_data$ID[i]),region=micro_haplotype_coord$Amplicon,"known"="Novel","POS"=snp_data$POS[i])
               not_recorded=not_recorded+1
             }else{
+              #print("4 dbSNP")
               temp=data.frame(snpid=as.character(snp_data$ID[i]),region=micro_haplotype_coord$Amplicon,"known"="dbSNP","POS"=snp_data$POS[i])
               in_dbsnp=in_dbsnp+1
             }
@@ -208,25 +212,26 @@ convert_to_geom_rect_format<-function(snp_data_frame,mh_data){
     status_hap2=""
     #haplotype 1
     if (temp_hap[1]==ref_base && temp$known=="Ken"){#non variant from Ken
-      status_hap1="KK(WT)"
+      status_hap1="Ancestral"
     }else if (temp_hap[1]!=ref_base && temp$known=="Ken"){#variant from Ken
-      status_hap1="KK(Variant)"
+      status_hap1="Derived"
     }else if (temp_hap[1]!=ref_base && temp$known=="dbSNP"){
-      status_hap1="dbSNP"
+      status_hap1="Derived"
     }else if (temp_hap[1]!=ref_base && temp$known=="Novel"){
       status_hap1="Novel"
     }
     #haplotype 2
     if (temp_hap[2]==ref_base && temp$known=="Ken"){#non variant
-      status_hap2="KK(WT)"
+      status_hap2="Ancestral"
     }else if (temp_hap[2]!=ref_base && temp$known=="Ken"){#variant
-      status_hap2="KK(Variant)"
+      status_hap2="Derived"
     }else if (temp_hap[2]!=ref_base && temp$known=="dbSNP"){
-      status_hap2="dbSNP"
+      status_hap2="Derived"
     }else if (temp_hap[2]!=ref_base && temp$known=="Novel"){
       status_hap2="Novel"
     }
     if (status_hap1!=""){
+      #print("status_hap1!=\"\"")
       converted_hap1=data.frame("snpid"=temp$snpid,"haplotype"="hap1","start"=temp$POS-1,"end"=temp$POS,
                                 "status"=status_hap1,"EAS"=temp$EAS,"AMR"=temp$AMR,"AFR"=temp$AFR,"EUR"=temp$EUR,
                                 "SAS"=temp$SAS,"REF"=temp$REF,"ALT"=temp$ALT,
@@ -234,6 +239,7 @@ convert_to_geom_rect_format<-function(snp_data_frame,mh_data){
       out=rbind(out,converted_hap1)
     }
     if (status_hap2!=""){
+      #print("status_hap2!=\"\"")
       converted_hap2=data.frame("snpid"=temp$snpid,"haplotype"="hap2","start"=temp$POS-1,"end"=temp$POS,
                                 "status"=status_hap2,"EAS"=temp$EAS,"AMR"=temp$AMR,"AFR"=temp$AFR,"EUR"=temp$EUR,
                                 "SAS"=temp$SAS,"REF"=temp$REF,"ALT"=temp$ALT,
@@ -264,7 +270,7 @@ convert_to_text_for_plot<-function(snp_data_frame,
         out2=rbind(out2,cbind(snp_data_frame[each_line,],
                               "SampleID"=samplename,
                               "Population"=pop_info,
-                              "VariantCategory"="dbSNP"))
+                              "VariantCategory"="Known"))
       }
     }else if (snp_data_frame$known[each_line]=="Novel"){
       if (temp_geno[1]!=ref_base || temp_geno[2]!=ref_base){
@@ -277,7 +283,7 @@ convert_to_text_for_plot<-function(snp_data_frame,
       out2=rbind(out2,cbind(snp_data_frame[each_line,],
                             "SampleID"=samplename,
                             "Population"=pop_info,
-                            "VariantCategory"="KK"))
+                            "VariantCategory"="Known"))
     }
   }
   #all_out[["text_out"]]=out
@@ -307,7 +313,10 @@ get_low_het_dp<-function(each_sample_mh_genotype,dp_cutoff=20,het_ratio_cutoff=0
       }else{
         temp_df=cbind(temp_df,data.frame("HetRatioCheck"="Y","HetRatio"=het_ratio))        
       }
-    }else{#homo site
+    }else if(temp_genotype == "./.") {
+      
+    }
+    else{#homo site
       temp_df=cbind(temp_df,data.frame("HetRatioCheck"="Y","HetRatio"=0))      
     }
     output_df=rbind(output_df,temp_df)

@@ -22,11 +22,19 @@ plot_microhaplotype_figure<-function(converted_snp_for_plot,
                                        levels=c("Ancestral",
                                                 "Derived",
                                                 "dbSNP",
-                                                "Novel"))#set factor levels
+                                                "Novel",
+                                                "Purple",
+                                                "NovelCP",
+                                                "Ancestral_placeholder",
+                                                "Purple_placeholder"))#set factor levels
   group.color=c("Ancestral"="#80796B99",
                 "Derived"="red",
-                "dbSNP"="#00A1D5FF",
-                "Novel"="black")#color definition for each variant
+                "dbSNP"="red",
+                "Novel"="black",
+                "Purple" = "#80796B99", #"Purple" = "#824CA7",
+                "NovelCP" = "#80796B99",
+                "Ancestral_placeholder" = "#80796B99",
+                "Purple_placeholder" = "#80796B99")#color definition for each variant
   ######## Plot this MH region in this specific sample with geom_rect() in ggplot2
   #draw two empty rectangles as representations of haplotype
   g=ggplot(data=haplotype_plot)+geom_rect(aes(xmin=as.numeric(Haplotype)-0.2,
@@ -43,7 +51,10 @@ plot_microhaplotype_figure<-function(converted_snp_for_plot,
                                                     breaks=c("Derived",
                                                              "Ancestral",
                                                     "dbSNP",
-                                                    "Novel"),drop=FALSE)
+                                                    "Novel",
+                                                    "Purple",
+                                                    "NovelCP",
+                                                    "Ancestral_placeholder"),drop=FALSE)
   g=g+geom_segment(aes(x=x1,y=y1,xend=x2,yend=y2),data=read_plot)
   g=g+theme(legend.position = "none",
             axis.text.y = element_blank(),
@@ -124,11 +135,19 @@ plot_microhaplotype_figure_simple<-function(converted_snp_for_plot,
                                        levels=c("Ancestral",
                                                 "Derived",
                                                 "dbSNP",
-                                                "Novel"))#set factor levels
+                                                "Novel",
+                                                "Purple",
+                                                "NovelCP",
+                                                "Ancestral_placeholder",
+                                                "Purple_placeholder"))#set factor levels
   group.color=c("Ancestral"="#80796B99",
                 "Derived"="red",
-                "dbSNP"="#00A1D5FF",
-                "Novel"="black")#color definition for each variant
+                "dbSNP"="red",
+                "Novel"="black",
+                "Purple" = "#80796B99", #"Purple" = "#824CA7",
+                "NovelCP" = "#80796B99",
+                "Ancestral_placeholder" = "#80796B99",
+                "Purple_placeholder" = "#80796B99")#color definition for each variant
   ######## Plot this MH region in this specific sample with geom_rect() in ggplot2
   #draw two empty rectangles as representations of haplotype
   g=ggplot(data=haplotype_plot)+geom_rect(aes(xmin=as.numeric(Haplotype)-extension,
@@ -145,7 +164,10 @@ plot_microhaplotype_figure_simple<-function(converted_snp_for_plot,
                         breaks=c("Derived",
                                  "Ancestral",
                                  "dbSNP",
-                                 "Novel"),drop=FALSE)
+                                 "Novel",
+                                 "Purple",
+                                 "NovelCP",
+                                 "Ancestral_placeholder"),drop=FALSE)
   
   #g=g+geom_segment(aes(x=x1,y=y1,xend=x2,yend=y2),data=read_plot)
   
@@ -203,11 +225,19 @@ plot_microhaplotype_figure_complete<-function(converted_snp_for_plot,
                                        levels=c("Ancestral",
                                                 "Derived",
                                                 "dbSNP",
-                                                "Novel"))#set factor levels
+                                                "Novel",
+                                                "Purple",
+                                                "NovelCP",
+                                                "Ancestral_placeholder",
+                                                "Purple_placeholder"))#set factor levels
   group.color=c("Ancestral"="#80796B99",
                 "Derived"="red",
-                "dbSNP"="#00A1D5FF",
-                "Novel"="black")#color definition for each variant
+                "dbSNP"="red",
+                "Novel"="black",
+                "Purple" = "#80796B99", #"Purple" = "#824CA7",
+                "NovelCP" = "#80796B99",
+                "Ancestral_placeholder" = "#80796B99",
+                "Purple_placeholder" = "#80796B99")#color definition for each variant
   ######## Plot this MH region in this specific sample with geom_rect() in ggplot2
   #draw two empty rectangles as representations of haplotype
   g=ggplot(data=haplotype_plot)+geom_rect(aes(xmin=as.numeric(Haplotype)-0.2,
@@ -224,7 +254,9 @@ plot_microhaplotype_figure_complete<-function(converted_snp_for_plot,
                         breaks=c("Ancestral",
                                  "Derived",
                                  "dbSNP",
-                                 "Novel"),drop=FALSE)
+                                 "Novel",
+                                 "NovelCP",
+                                 "Purple"),drop=FALSE)
   g=g+geom_segment(aes(x=x1,y=y1,xend=x2,yend=y2),data=read_plot)
   g=g+theme(legend.position = "none",
             axis.text.y = element_blank(),
