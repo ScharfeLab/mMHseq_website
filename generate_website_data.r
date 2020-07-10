@@ -6,7 +6,7 @@ library(sqldf)
 rm(list=ls())
 
 # set input directory
-work_directory = "/Users/iris/Downloads/mMHseq_data_run9_test/" # local
+work_directory = "" # local
 setwd(work_directory)
 source("generate_website_data_lib.r")
 
